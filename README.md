@@ -1,5 +1,5 @@
 # CoralRugosity
-A C++&amp;OpenGL software for coral rugosity computation (HKUST VGD).
+A C++&amp;OpenGL software for coral rugosity computation (HKUST VGD). This project is developed with Qt 5.8.
 
 ## Update History:
 

@@ -3,7 +3,16 @@ A C++&amp;OpenGL software for coral rugosity computation (HKUST VGD). This proje
 
 ## Update History:
 
-**``2022/7/10`` First commit**
+**``2022/7/13`` 2nd commit**
 
-  - interactively sketch a line on the screen to specify the desired plane to compute rugosity.
-  - a PLY loader to support arbitrary mesh attributes, and binary modes.
+  - Use **BVH Tree** data structure to accelerate the query algorithm.
+  - Obtain the rugosity in real-time (<1s).
+  
+<div align=center><img width="350" src="https://github.com/RyuZhihao123/CoralRugosity/blob/main/figures/7_13_1.png"/></div>
+<div align=center><img width="350" src="https://github.com/RyuZhihao123/CoralRugosity/blob/main/figures/7_13_2.png"/></div>
+
+**``2022/7/10`` 1st commit**
+
+  - Interactively sketch a line on the screen to specify the desired plane to compute rugosity.
+  - A PLY loader to support arbitrary mesh attributes, and binary modes.
+  

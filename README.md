@@ -10,7 +10,7 @@ A C++&amp;OpenGL software for coral rugosity computation (HKUST VGD). This proje
   - Use **BVH Tree** data structure to accelerate the query algorithm.
   - Obtain the rugosity in real-time (<1s).
 
-<div align=center><img height="200" src="https://github.com/RyuZhihao123/CoralRugosity/blob/main/figures/7_13_1.png"/> <img height="200" src="https://github.com/RyuZhihao123/CoralRugosity/blob/main/figures/7_13_2.png"/></div>
+<div align=center><img height="300" src="https://github.com/RyuZhihao123/CoralRugosity/blob/main/figures/7_13_.png"/></div>
 
 
 **``2022/7/10`` 1st commit**

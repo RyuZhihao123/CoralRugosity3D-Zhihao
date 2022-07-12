@@ -106,21 +106,34 @@ void GLWidget::initializeGL()
     // 加载默认的coral mesh
     m_rugosity->GetInputMesh().CreateMeshVBO("D:/Projects/HKUST_VGD/Coral/videos/video1/coral model (small image size)/scene_dense_mesh_refine_texture.ply");
     m_rugosity->BuildKDTree(); // 创建Kd树
+    m_rugosity->m_inputMesh.BuildDictionary(); // 构建映射字典
+    m_rugosity->BuildPartition_WithOctree(0.5); // 创建OctTree分割
 
     // 设定最原始配置的curve
     QVector<QVector3D> tmp;
 
     tmp.append(QVector3D(0.0,0.0,0.0));
     tmp.append(QVector3D(0.0,0.0,1.0));
-    tmp.append(QVector3D(0.0,1.0,2.0));
-    tmp.append(QVector3D(2.0,-1.0,-2.0));
-    tmp.append(QVector3D(5.0,10.0,0.0));
 
     Curve tmpCurve;
     tmpCurve.pts = tmp;
     m_rugosity->m_curves.append(tmpCurve);
 
     m_rugosity->UpdateCurrentMesh();
+
+    // 测试区域
+    QVector3D v0(+1,0,0);
+    QVector3D v1(0,0,-1);
+    QVector3D v2(0,0.1,+1);
+
+    Ray testRay;
+    testRay.center = QVector3D(7.07107,0.0,7.07107);
+    testRay.dir = QVector3D(-0.722628,0.156867,-0.673202);
+
+    QVector3D intPt;
+    bool res = GlobalTools::GetIntersectPoint_ray_to_triangle(testRay, v0, v1,v2, intPt);
+
+    qDebug()<<res<<intPt;
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -134,7 +147,11 @@ void GLWidget::resizeGL(int w, int h)
     else if(m_projectMode == _Ortho)
         m_projectMatrix.ortho(-400,400,-400,400,-100.0,1000);
 }
-
+QVector<int> seletecedID;
+Ray endRay;
+bool isSelectedPlane = false;
+QVector3D intersectPointA, intersectPointB;
+QVector<QVector3D> curvePoints;
 void GLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -194,19 +211,18 @@ void GLWidget::paintGL()
 
     {
         //------------ 渲染其他 --------------------- //
+
         if(this->isPressRightButton)
         {
+//            setupShaders(this->m_skeletonProgram);
             // 绘制一个选取矩形
-            glColor3f(0.0,0.0,1.0);
-
+            glLineWidth(13.0f);
             m_skeletonProgram->bind();
-
+            m_skeletonProgram->setUniformValue("u_color",QVector3D(1,0,0));
             m_skeletonProgram->setUniformValue("mat_projection",QMatrix4x4());
             m_skeletonProgram->setUniformValue("mat_view",QMatrix4x4());
 
             glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-
-            glLineWidth(2.0f);
 
             float x1 = 2*m_startPt.x()/(float)width()-1.0;
             float y1 = -2*m_startPt.y()/(float)height()+1.0;
@@ -217,12 +233,48 @@ void GLWidget::paintGL()
                 glVertex2f(x1, y1);
                 glVertex2f(x2, y2);
             glEnd();
-
-
-            glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-
+            endRay = this->GetRayFromScreenPos(m_endPt);
         }
+
+//        //  检查ray的方向是否正确
+//        setupShaders(m_skeletonProgram);
+
+//        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+
+//        m_skeletonProgram->setUniformValue("u_color",QVector3D(0,0,1));
+
+//        QVector3D dist_pt1 = 1.0f*endRay.dir + endRay.center;
+//        QVector3D dist_pt2 = 9.0f*endRay.dir + endRay.center;
+//        //qDebug()<<camera_pos<<ray<<dist_pt;
+//        glBegin(GL_LINES);
+//            glVertex3f(dist_pt1.x(), dist_pt1.y(), dist_pt1.z());
+//            glVertex3f(dist_pt2.x(), dist_pt2.y(), dist_pt2.z());
+//        glEnd();
+
     }
+
+     setupShaders(m_skeletonProgram);
+     m_rugosity->RenderAllOctreeNode(m_skeletonProgram);
+//     m_rugosity->RenderSelectedOctreeNode(m_skeletonProgram, seletecedID);
+
+
+     if(isSelectedPlane)  // 如果选中了一个plane，则绘制2个交点和平面
+     {
+        m_skeletonProgram->setUniformValue("u_color",QVector3D(0,0,1));
+        glPointSize(30);
+        glBegin(GL_POINTS);
+            glVertex3f(intersectPointA.x(),intersectPointA.y(), intersectPointA.z());
+            glVertex3f(intersectPointB.x(),intersectPointB.y(), intersectPointB.z());
+        glEnd();
+
+        glPointSize(10);
+        glBegin(GL_POINTS);
+            for(int i=0; i<curvePoints.size(); ++i)
+                glVertex3f(curvePoints[i].x(),curvePoints[i].y(),curvePoints[i].z());
+        glEnd();
+     }
+
+     glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 }
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
@@ -270,6 +322,34 @@ void GLWidget::mouseReleaseEvent(QMouseEvent *event)
     if(isPressRightButton)
     {
         isPressRightButton = false;
+
+        // 计算相交的
+        Ray startRay = this->GetRayFromScreenPos(m_startPt);
+        Ray endRay = this->GetRayFromScreenPos(m_endPt);
+
+        seletecedID = m_rugosity->QueryIntersectedOctreeBoxIDs(endRay);
+//        seletecedID = m_rugosity->QueryIntersectionPoints(endRay);
+        QVector<int> startSelectedID = m_rugosity->QueryIntersectedOctreeBoxIDs(startRay);
+        QVector<int> endSelectedID = m_rugosity->QueryIntersectedOctreeBoxIDs(endRay);
+
+
+        bool isSelectedA = m_rugosity->QueryIntersectedPointAmong(startRay,startSelectedID,intersectPointA);
+        bool isSelectedB = m_rugosity->QueryIntersectedPointAmong(endRay,endSelectedID,intersectPointB);
+
+
+
+        isSelectedPlane = isSelectedA && isSelectedB;
+
+        if(isSelectedPlane == true)
+        {
+            QVector3D planeNormal = QVector3D::crossProduct((intersectPointA-intersectPointB), QVector3D(0,1,0));
+            planeNormal = planeNormal.normalized();
+
+            curvePoints = m_rugosity->GetRugosityCurvePoints(intersectPointA, intersectPointB,planeNormal);
+
+        }
+
+        qDebug()<<isSelectedPlane << intersectPointA<<intersectPointB;
         update();
         return;
     }
@@ -300,6 +380,26 @@ void GLWidget::OnViewingTimer()
 {
     m_horAngle +=1;
     update();
+}
+
+Ray GLWidget::GetRayFromScreenPos(QVector2D screenPoint)
+{
+    QVector3D eyePos = m_eyeDist+QVector3D(scale*distance*cos(PI*m_verAngle/180.0)*cos(PI*m_horAngle/180.0),
+                                   scale*distance*sin(PI*m_verAngle/180.0),
+                                   scale*distance*cos(PI*m_verAngle/180.0)*sin(PI*m_horAngle/180.0));
+    QMatrix4x4 matV, matP;
+    matV.setToIdentity();
+    matV.lookAt(eyePos,m_eyeDist,QVector3D(0,1,0));
+
+    matP.setToIdentity();
+    matP.perspective(45.0f,(float)width()/(float)height(),0.1f,100000.0f);
+
+    Ray ray;
+    ray.center = eyePos;
+    ray.dir = GlobalTools::GetRayDirection_From2DScreenPos(screenPoint.toPointF(), width(), height(),
+                                                                 matP,matV);
+
+    return ray;
 }
 
 GLWidget::~GLWidget(){}

@@ -31,8 +31,9 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     3rdparty/tinyply.cpp \
     glwidget.cpp \
-    object.cpp \
-    rugosityalgorithm.cpp
+    rugosityalgorithm.cpp \
+    object_Mesh.cpp \
+    object_Octree.cpp
 
 HEADERS  += mainwindow.h \
     3rdparty/happly.h \

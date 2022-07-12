@@ -28,6 +28,7 @@ struct GLBuffer
     int count;
 };
 
+
 class Object
 {
 public:
@@ -40,12 +41,21 @@ public:
     QVector<QVector3D> m_colors;
     QVector<uint3> m_faceids;
 
+    QMap<int, QVector<int>> m_dictPtToFace; // 存储顶点对应的面片的id (vid - fid)
+
     // OpenGL Buffers
-    GLBuffer m_pointVBO;
-    GLBuffer m_lineVBO;
     GLBuffer m_meshVBO;
     QOpenGLTexture* m_texture = nullptr;
 
+    // 八叉树及查询
+
+    OctreenNode octreeWhole;
+    QVector<OctreenNode> octreeList;
+    void BuildOctree();
+    QVector3D QueryPointFromRay(QVector3D camera, QVector3D cameraDir);
+
+    // 构建vid和fid的字典
+    void BuildDictionary();
     // Mesh相关
     void SetTextures(const QString& filepath);
     void UpdateMeshs();

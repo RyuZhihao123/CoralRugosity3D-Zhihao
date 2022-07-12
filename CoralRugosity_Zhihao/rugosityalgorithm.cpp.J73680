@@ -1,0 +1,160 @@
+#include "rugosityalgorithm.h"
+
+RugosityAlgorithm::RugosityAlgorithm()
+{
+
+}
+
+
+//////
+/// KD-Tree 相关函数
+//////
+void RugosityAlgorithm::BuildKDTree()
+{
+    for(unsigned int i=0; i<m_inputMesh.m_vertices.size(); ++i)
+        cloud.push_back(GlobalTools::GetSimplePoint(m_inputMesh.m_vertices[i]));
+
+    index.buildTree(cloud);
+}
+
+std::vector<size_t> RugosityAlgorithm::RadiusSearch(const QVector3D &pos, float radius)
+{
+    auto closeNodes = index.getPointsWithinCube(GlobalTools::GetSimplePoint(pos),
+                                                radius);
+    std::vector<size_t> res;
+    for(unsigned int i=0; i<closeNodes.size(); ++i)
+    {
+        QVector3D pt = GlobalTools::GetVector3D(cloud[closeNodes[i]]);
+
+        if(pt.distanceToPoint(pos) < radius)
+            res.push_back(closeNodes[i]);
+    }
+    return res;
+}
+
+std::vector<size_t> RugosityAlgorithm::CubeSearch(const QVector3D &pos, float radiusSize)
+{
+    auto closeNodes = index.getPointsWithinCube(GlobalTools::GetSimplePoint(pos),radiusSize);
+
+    return closeNodes;
+}
+
+
+///
+/// 构建八叉树
+///
+///
+///
+/// {
+struct LabelID {
+    int x, y, z;
+
+//    bool operator < ( const LabelID& item) const
+//    {
+//        if(this->x != item.x){
+//            return this->x<item.x;
+//        }
+//        if(this->y != item.y){
+//            return this->y<item.y;
+//        }
+//        return this->z<item.z;
+//    }
+
+    static int GetBlockID(float coordinate, float width){
+
+        int blockID = coordinate/width;
+
+        if(blockID > 0)
+        {
+            if( blockID%2 == 0) // 偶数
+                return blockID/2;
+            else if( blockID%2 !=0) // 奇数
+                return blockID/2+1;
+        }
+        if(blockID < 0)
+        {
+            if( blockID%2 == 0) // 偶数
+                return blockID/2;
+            else if( blockID%2 !=0) // 奇数
+                return blockID/2-1;
+        }
+
+        return 0;
+
+    }
+};
+void RugosityAlgorithm::BuildPartition_WithOctree(float width)
+{
+    QMap<long, OctreenNode> octNodes;
+
+
+    for(int i=0; i<m_inputMesh.m_vertices.size(); ++i)
+    {
+        QVector3D pt = m_inputMesh.m_vertices[i];
+
+        LabelID id;
+
+        id.x = LabelID::GetBlockID(pt.x(), width);
+        id.y = LabelID::GetBlockID(pt.y(), width);
+        id.z = LabelID::GetBlockID(pt.z(), width);
+
+
+        long curID = id.x * 1e9 + id.y*1e4 + id.z;
+
+        OctreenNode& curOctNode = octNodes[curID];
+        //qDebug()<<"新建"<<curID<<pt<<id.x<<id.y<<id.z;
+        if(curOctNode.vertexIDs.size() == 0)  // 如果之前没有这个octNode
+        {
+            curOctNode.center = QVector3D(id.x*(width),id.y*(width),id.z*(width));
+            curOctNode.width = width;
+        }
+        curOctNode.vertexIDs.append(i);
+    }
+
+    for(int i=0; i<octNodes.keys().size(); ++i)
+    {
+        auto key = octNodes.keys()[i];
+        this->m_octree.append(octNodes[key]);
+    }
+
+    qDebug()<<"OctTree构建完毕:"<<octNodes.keys().size();
+}
+
+
+void RugosityAlgorithm::FindVerticalPlane(QVector2D startPt2D, QVector2D endPt2D)
+{
+
+}
+
+void RugosityAlgorithm::UpdateCurrentMesh()
+{
+    for(int i=0; i<m_curveObjects.size(); ++i)
+        m_curveObjects[i].ResetAll();
+
+    m_curveObjects.clear();
+
+    for(int i=0; i<m_curves.size(); ++i)
+    {
+
+        Object obj;
+        obj.CreateLineVBO(m_curves[i]);
+
+        m_curveObjects.append(obj);
+    }
+}
+
+void RugosityAlgorithm::RenderCurrentMesh(QOpenGLShaderProgram *&program, const QMatrix4x4 &modelMat)
+{
+    for(int i=0; i<m_curves.size(); ++i)
+    {
+        m_curveObjects[i].DrawLineVBO(program, modelMat);
+    }
+}
+
+void RugosityAlgorithm::RenderAllOctreeNode(QOpenGLShaderProgram *&program)
+{
+    for(int i=0; i<m_octree.size(); ++i)
+    {
+        GlobalTools::DrawAxis(program, m_octree[i].center,m_octree[i].width);
+    }
+}

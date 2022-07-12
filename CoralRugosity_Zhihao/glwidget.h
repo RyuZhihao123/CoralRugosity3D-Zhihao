@@ -1,15 +1,5 @@
 #ifndef GLWIDGET_H
 #define GLWIDGET_H
-#include <QMouseEvent>
-#include <QKeyEvent>
-#include <QWheelEvent>
-#include <QTimer>
-#include <QOpenGLWidget>
-#include <QOpenGLFunctions>
-#include <QOpenGLShaderProgram>
-#include <QOpenGLTexture>
-#include <QOpenGLBuffer>
-#include <QTime>
 #include "object.h"
 #include "rugosityalgorithm.h"
 
@@ -55,7 +45,6 @@ protected:
     QOpenGLShaderProgram* m_meshProgram;
 
     // Textures
-
     QOpenGLTexture* m_leafTexture;
 
     void initShaders(QOpenGLShaderProgram *&m_program, const QString &shaderName, bool v, bool c, bool n, bool t);
@@ -85,6 +74,10 @@ protected:
     void wheelEvent(QWheelEvent* event);
 
     void keyPressEvent(QKeyEvent* e);
+
+private:
+
+    Ray GetRayFromScreenPos(QVector2D screenPoint);
 
 private slots:
     void OnViewingTimer();

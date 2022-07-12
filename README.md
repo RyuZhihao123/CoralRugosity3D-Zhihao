@@ -3,6 +3,8 @@ A C++&amp;OpenGL software for coral rugosity computation (HKUST VGD). This proje
 
 ## Update History:
 
+**``To do``** : implement easy-to-use user interface (control panel).
+
 **``2022/7/13`` 2nd commit**
 
   - Use **BVH Tree** data structure to accelerate the query algorithm.

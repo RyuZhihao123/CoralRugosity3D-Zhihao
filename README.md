@@ -3,9 +3,14 @@ A C++&amp;OpenGL software for coral rugosity computation (HKUST VGD). This proje
 
 ## Update History:
 
-**``TODO``** : 
+**``2022/7/20``** 3nd commit: 
 
-  - implement easy-to-use user interface (control panel).
+  - Improve algorithms and interactive control.
+  - Visual charts (cross setion & height)
+  - Export data.
+  - UI.
+  
+  <div align=center><img height="300" src="https://github.com/RyuZhihao123/CoralRugosity/blob/main/figures/7_20_0.png"/></div>
 
 **``2022/7/13`` 2nd commit**
 

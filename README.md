@@ -1,5 +1,5 @@
 # CoralRugosity-Zhihao
-A C++&amp;OpenGL software for coral rugosity computation (HKUST VGD). This project is developed with Qt 5.8.
+A C++&amp;OpenGL software for coral rugosity computation (HKUST VGD). This project is developed with Qt 5.8 and OpenGL 4.0+ (can use Visual Studio 2019+ to compile this project as well).
 
 ## Update History:
 

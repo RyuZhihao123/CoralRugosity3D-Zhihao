@@ -24,4 +24,4 @@ A C++&amp;OpenGL software for coral rugosity computation (HKUST VGD). This proje
 
   - Interactively sketch a line on the screen to specify the desired plane to compute rugosity.
   - A PLY loader to support arbitrary mesh attributes, and binary modes.
-  
+ 

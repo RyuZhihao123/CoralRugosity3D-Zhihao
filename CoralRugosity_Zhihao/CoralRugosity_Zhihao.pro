@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
+QT       += core gui opengl charts
 
 LIBS += -lopengl32
 LIBS += -lglu32
@@ -29,17 +29,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    3rdparty/tinyply.cpp \
+    utility/tinyply.cpp \
     glwidget.cpp \
     rugosityalgorithm.cpp \
     object_Mesh.cpp \
     object_Octree.cpp
 
 HEADERS  += mainwindow.h \
-    3rdparty/happly.h \
-    3rdparty/kdtree.h \
-    3rdparty/tinyply.h \
-    3rdparty/utils.h \
+    utility/happly.h \
+    utility/kdtree.h \
+    utility/tinyply.h \
+    utility/utils.h \
     glwidget.h \
     object.h \
     rugosityalgorithm.h

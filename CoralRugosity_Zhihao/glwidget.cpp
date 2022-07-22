@@ -18,9 +18,6 @@ GLWidget::GLWidget(QWidget *parent) :
     m_skeletonProgram = NULL;
     m_pointProgram = NULL;
 
-    m_polygonMode = true;
-    m_isBarkTextured = false;
-    m_isShowSeg = false;
 
     m_projectMode = _Perspective;
     this->m_displayMode = DISPLAY_MODE::_Normal;
@@ -82,7 +79,7 @@ void GLWidget::initializeGL()
 {
     initializeOpenGLFunctions();
 
-    glClearColor(1.0,1.0,1.0,1.0);
+    glClearColor(0.96,0.94,0.94,1.0);
 
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_DEPTH_TEST);
@@ -108,18 +105,6 @@ void GLWidget::initializeGL()
     m_rugosity->BuildKDTree(); // 创建Kd树
     m_rugosity->m_inputMesh.BuildDictionary(); // 构建映射字典
     m_rugosity->BuildPartition_WithOctree(0.5); // 创建OctTree分割
-
-    // 设定最原始配置的curve
-    QVector<QVector3D> tmp;
-
-    tmp.append(QVector3D(0.0,0.0,0.0));
-    tmp.append(QVector3D(0.0,0.0,1.0));
-
-    Curve tmpCurve;
-    tmpCurve.pts = tmp;
-    m_rugosity->m_curves.append(tmpCurve);
-
-    m_rugosity->UpdateCurrentMesh();
 
     // 测试区域
     QVector3D v0(+1,0,0);
@@ -147,16 +132,16 @@ void GLWidget::resizeGL(int w, int h)
     else if(m_projectMode == _Ortho)
         m_projectMatrix.ortho(-400,400,-400,400,-100.0,1000);
 }
-QVector<int> seletecedID;
-Ray endRay;
+
 bool isSelectedPlane = false;
 QVector3D intersectPointA, intersectPointB;
 QVector<QVector3D> curvePoints;
+
 void GLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if(m_projectMode == _Perspective)
+    // perspective camera mode
     {
         m_eyePos = m_eyeDist+QVector3D(scale*distance*cos(PI*m_verAngle/180.0)*cos(PI*m_horAngle/180.0),
                                        scale*distance*sin(PI*m_verAngle/180.0),
@@ -165,19 +150,15 @@ void GLWidget::paintGL()
         m_viewMatrix.lookAt(m_eyePos,m_eyeDist,QVector3D(0,1,0));
         m_modelMat.setToIdentity();
     }
-    else if(m_projectMode == _Ortho)
-    {
-        m_viewMatrix.setToIdentity();
-        m_modelMat.setToIdentity();
-    }
 
 
-    //    if(!m_polygonMode)
-    //        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    //    else
-//    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
-     glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    if(m_isWireFrame)
+        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+
+
     {
         glLineWidth(1);
         // 绘制mesh
@@ -197,30 +178,24 @@ void GLWidget::paintGL()
         m_meshProgram->setUniformValue("isLighting",false);
         m_meshProgram->setUniformValue("isBark",false);
         m_meshProgram->setUniformValue("isShowSeg",false);
-        //m_tree->DrawTreeMeshVBO(m_meshProgram,m_modelMat);
         m_rugosity->GetInputMesh().DrawMeshVBO(m_meshProgram,m_modelMat);
 
     }
-    {
-        // 绘制找到的curve
-        glLineWidth(4);
-        setupShaders(this->m_skeletonProgram);
-        m_skeletonProgram->setUniformValue("u_color",QVector3D(1,0,0));
-        m_rugosity->RenderCurrentMesh(m_skeletonProgram,m_modelMat);
-    }
+
 
     {
         //------------ 渲染其他 --------------------- //
 
         if(this->isPressRightButton)
         {
-//            setupShaders(this->m_skeletonProgram);
+            //            setupShaders(this->m_skeletonProgram);
             // 绘制一个选取矩形
             glLineWidth(13.0f);
             m_skeletonProgram->bind();
             m_skeletonProgram->setUniformValue("u_color",QVector3D(1,0,0));
             m_skeletonProgram->setUniformValue("mat_projection",QMatrix4x4());
             m_skeletonProgram->setUniformValue("mat_view",QMatrix4x4());
+            m_skeletonProgram->setUniformValue("mat_model",QMatrix4x4());
 
             glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 
@@ -230,51 +205,58 @@ void GLWidget::paintGL()
             float y2 = -2*m_endPt.y()/(float)height()+1.0;
 
             glBegin(GL_LINES);
-                glVertex2f(x1, y1);
-                glVertex2f(x2, y2);
+            glVertex2f(x1, y1);
+            glVertex2f(x2, y2);
             glEnd();
-            endRay = this->GetRayFromScreenPos(m_endPt);
+
         }
 
-//        //  检查ray的方向是否正确
-//        setupShaders(m_skeletonProgram);
-
-//        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-
-//        m_skeletonProgram->setUniformValue("u_color",QVector3D(0,0,1));
-
-//        QVector3D dist_pt1 = 1.0f*endRay.dir + endRay.center;
-//        QVector3D dist_pt2 = 9.0f*endRay.dir + endRay.center;
-//        //qDebug()<<camera_pos<<ray<<dist_pt;
-//        glBegin(GL_LINES);
-//            glVertex3f(dist_pt1.x(), dist_pt1.y(), dist_pt1.z());
-//            glVertex3f(dist_pt2.x(), dist_pt2.y(), dist_pt2.z());
-//        glEnd();
 
     }
 
-     setupShaders(m_skeletonProgram);
-     m_rugosity->RenderAllOctreeNode(m_skeletonProgram);
-//     m_rugosity->RenderSelectedOctreeNode(m_skeletonProgram, seletecedID);
+    if(m_isShowBVH)
+    {
+        setupShaders(m_skeletonProgram);
+        m_skeletonProgram->setUniformValue("mat_model",m_modelMat);
+        m_rugosity->RenderAllOctreeNode(m_skeletonProgram);
+    }
 
-
-     if(isSelectedPlane)  // 如果选中了一个plane，则绘制2个交点和平面
-     {
+    if(isSelectedPlane)  // 如果选中了一个plane，则绘制2个交点和平面
+    {
+        setupShaders(m_skeletonProgram);
+        m_skeletonProgram->setUniformValue("mat_model",m_modelMat);
         m_skeletonProgram->setUniformValue("u_color",QVector3D(0,0,1));
         glPointSize(30);
         glBegin(GL_POINTS);
-            glVertex3f(intersectPointA.x(),intersectPointA.y(), intersectPointA.z());
-            glVertex3f(intersectPointB.x(),intersectPointB.y(), intersectPointB.z());
+        glVertex3f(intersectPointA.x(),intersectPointA.y(), intersectPointA.z());
+        glVertex3f(intersectPointB.x(),intersectPointB.y(), intersectPointB.z());
         glEnd();
 
         glPointSize(10);
         glBegin(GL_POINTS);
-            for(int i=0; i<curvePoints.size(); ++i)
-                glVertex3f(curvePoints[i].x(),curvePoints[i].y(),curvePoints[i].z());
+        for(int i=0; i<curvePoints.size(); ++i)
+            glVertex3f(curvePoints[i].x(),curvePoints[i].y(),curvePoints[i].z());
         glEnd();
-     }
 
-     glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+        glLineWidth(7);
+
+
+        for(int i=0; i<m_rugosity->m_curves.size(); ++i)
+        {
+            Curve& curve = m_rugosity->m_curves[i];
+            m_skeletonProgram->setUniformValue("u_color",QVector3D(0.5,0,0));
+
+            glBegin(GL_LINE_STRIP);
+            for(int p=0; p<curve.pts.size(); ++p)
+                glVertex3f(curve.pts[p].x(),curve.pts[p].y(),curve.pts[p].z());
+
+            glEnd();
+        }
+
+
+    }
+
+    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 }
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
@@ -286,8 +268,6 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
         return;
     }
     m_clickpos = event->pos();
-
-
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
@@ -317,6 +297,130 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
+QVector<QVector<QVector2D>> GLWidget::Get2DVersionCurves(float& minY, float& maxY)
+{
+    QVector3D dir = (intersectPointB - intersectPointA).normalized();
+    dir.setY(0.0);
+
+    if(dir.z()>0)
+        dir = - dir;
+
+
+    auto curves = m_rugosity->m_curves;
+    QVector<QVector<QVector2D>> res_crosssection;
+    res_crosssection.resize(curves.size());
+
+    minY = 1e10;
+    maxY = -1e10;
+    for(int i=0; i<curves.size(); ++i)
+    {
+        auto curCurve = curves[i].pts;
+
+        for(int p=0; p<curCurve.size(); ++p)
+        {
+            QVector3D pt = curCurve[p];
+            pt.setY(0.0);
+
+            float dotProduct = QVector3D::dotProduct(pt, dir);
+
+            float y = curCurve[p].y();
+            res_crosssection[i].append(QVector2D(dotProduct, y));
+
+            if(y<minY) minY = y;
+            if(y>maxY) maxY = y;
+        }
+    }
+
+    float range = maxY - minY;
+    minY -= 0.05 * range;
+    maxY += 0.05 * range;
+    return res_crosssection;
+}
+
+bool ComputeHighestY(float x, const QVector<QVector<QVector2D>>& curves, float& maxY)
+{
+
+    bool isLegal = false;
+    maxY = -1e9;
+    for(int ttt =0; ttt<curves.size(); ++ttt)
+    {
+        const QVector<QVector2D>& curve = curves[ttt];
+
+        if(curve.size() <=1)
+            continue;
+
+        for (int i=0; i<curve.size()-1; i++)
+        {
+            QVector2D p1 = curve[i];
+            QVector2D p2 = curve[i+1];
+
+            if(p1.x() == p2.x())  // 如果两个点p1和p2相等
+                continue;
+
+            if(p1.x() > p2.x()) // 如果p1在p2的右边
+            {
+                // 交换哈
+                QVector2D tmp = p1;
+                p1 = p2;
+                p2 = tmp;
+            }
+
+            if(p1.x() <= x && x <= p2.x())
+            {
+                isLegal = true;
+
+                float ratio = (x-p1.x())/(p2.x()-p1.x());
+                float y = p1.y() + ratio * (p2.y()-p1.y());
+
+                if (y> maxY)
+                    maxY = y;
+            }
+        }
+    }
+
+    return isLegal;
+}
+
+
+QVector<QVector2D> GLWidget::Get2DHeightMap(const QVector<QVector<QVector2D>>& curves)
+{
+    // 先统计出所有的curves的x坐标，并记录到一个数组中，按照递增顺序排序好
+    // 之后，求每个x坐标和所有的curve的edge的交点（交点可能有多个，保留y最高）
+    // 一个加速技巧：求交点时，先判断当前x坐标是否位于edge的两个点的x坐标之内，
+    // if so, then compute it's y coordinate (linear interpolation), otherwise, no intersection point.
+
+
+    QVector<float> x_coordinates;
+    for(int ttt =0; ttt<curves.size(); ++ttt)
+    {
+        const QVector<QVector2D>& curve = curves[ttt];
+
+        if(curve.size() <=1)
+            continue;
+
+        for (int i=0; i<curve.size(); ++i)
+        {
+            x_coordinates.push_back(curve[i].x());
+        }
+    }
+
+    qSort(x_coordinates); // 排序后的x
+    QVector<QVector2D> res;
+
+    for(int i=0; i<x_coordinates.size(); ++i)
+    {
+        float x = x_coordinates[i];
+        float y;
+        if(ComputeHighestY(x,curves, y))
+        {
+            res.push_back(QVector2D(x,y));
+        }
+    }
+
+    return res;
+}
+
+
 void GLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if(isPressRightButton)
@@ -327,8 +431,7 @@ void GLWidget::mouseReleaseEvent(QMouseEvent *event)
         Ray startRay = this->GetRayFromScreenPos(m_startPt);
         Ray endRay = this->GetRayFromScreenPos(m_endPt);
 
-        seletecedID = m_rugosity->QueryIntersectedOctreeBoxIDs(endRay);
-//        seletecedID = m_rugosity->QueryIntersectionPoints(endRay);
+
         QVector<int> startSelectedID = m_rugosity->QueryIntersectedOctreeBoxIDs(startRay);
         QVector<int> endSelectedID = m_rugosity->QueryIntersectedOctreeBoxIDs(endRay);
 
@@ -347,6 +450,16 @@ void GLWidget::mouseReleaseEvent(QMouseEvent *event)
 
             curvePoints = m_rugosity->GetRugosityCurvePoints(intersectPointA, intersectPointB,planeNormal);
 
+            m_rugosity->UpdateCurrentCurveMesh();
+
+            float minY, maxY;
+            this->m_2D_curves = Get2DVersionCurves(minY, maxY);
+            this->m_2D_heights = Get2DHeightMap(this->m_2D_curves);
+
+            qDebug()<<m_2D_heights.size();
+
+            emit sig_updateChart(minY, maxY);
+
         }
 
         qDebug()<<isSelectedPlane << intersectPointA<<intersectPointB;
@@ -361,8 +474,7 @@ void GLWidget::keyPressEvent(QKeyEvent *e)
         m_eyeDist.setY(m_eyeDist.y()+5);
     if(e->key() == Qt::Key_S)
         m_eyeDist.setY(m_eyeDist.y()-5);
-    if(e->key() == Qt::Key_C)
-        m_polygonMode = ! m_polygonMode;
+
     this->update();
 }
 
@@ -385,8 +497,8 @@ void GLWidget::OnViewingTimer()
 Ray GLWidget::GetRayFromScreenPos(QVector2D screenPoint)
 {
     QVector3D eyePos = m_eyeDist+QVector3D(scale*distance*cos(PI*m_verAngle/180.0)*cos(PI*m_horAngle/180.0),
-                                   scale*distance*sin(PI*m_verAngle/180.0),
-                                   scale*distance*cos(PI*m_verAngle/180.0)*sin(PI*m_horAngle/180.0));
+                                           scale*distance*sin(PI*m_verAngle/180.0),
+                                           scale*distance*cos(PI*m_verAngle/180.0)*sin(PI*m_horAngle/180.0));
     QMatrix4x4 matV, matP;
     matV.setToIdentity();
     matV.lookAt(eyePos,m_eyeDist,QVector3D(0,1,0));
@@ -397,7 +509,7 @@ Ray GLWidget::GetRayFromScreenPos(QVector2D screenPoint)
     Ray ray;
     ray.center = eyePos;
     ray.dir = GlobalTools::GetRayDirection_From2DScreenPos(screenPoint.toPointF(), width(), height(),
-                                                                 matP,matV);
+                                                           matP,matV);
 
     return ray;
 }

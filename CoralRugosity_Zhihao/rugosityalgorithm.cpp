@@ -214,7 +214,15 @@ QVector<QVector3D> RugosityAlgorithm::GetRugosityCurvePoints(QVector3D intersect
 
     QVector<QVector3D> res;
 
-    for(int tt=0; tt<this->m_octree.size(); ++tt)  // 首先遍历第tt个OctreeNode-Box
+    QMap<int, QVector<int>> connected_lines;  // the connected lines;
+
+    QMap<LineID, QVector3D> dict_points;
+    QMap<LineID, QVector<LineID>> dict_edges;
+
+
+    // 初始化
+
+    for(int tt=0; tt<this->m_octree.size(); ++tt)  // First, visit the tt-th OctreeNode-Box
     {
         OctreenNode& box = m_octree[tt];
 
@@ -223,16 +231,16 @@ QVector<QVector3D> RugosityAlgorithm::GetRugosityCurvePoints(QVector3D intersect
 
         float distBoxToPlane = box.center.distanceToPlane(p, normal);
 
-        if(distBoxToPlane > boxRadius)  // 如果Box距离平面太远
+        if(distBoxToPlane > boxRadius)  // If the box center is too distant from the plane;
             continue;
 
-        // 检测该Box的每个三角形的边和给定Plane的交点
-        for(int mm=0; mm<box.vertexIDs.size(); ++mm)  // 遍历该box的所有的顶点
+        // Check if each edge of the triangles in current box was intersected with the plane;
+        for(int mm=0; mm<box.vertexIDs.size(); ++mm)  // Visit all vertices belonging to current box;
         {
-            int vid = box.vertexIDs[mm]; // 当前顶点vid
+            int vid = box.vertexIDs[mm]; // current vertex ID (vid)
             QVector<int>& faceDict =m_inputMesh.m_dictPtToFace[vid];
 
-            for(int i=0; i<faceDict.size(); ++i)  // 遍历该顶点vid对应的所有的面
+            for(int i=0; i<faceDict.size(); ++i)  // List all faces associated with current vertex (vid)
             {
                 int faceID = faceDict[i];
                 uint3 triangle = m_inputMesh.m_faceids[faceID];
@@ -240,22 +248,188 @@ QVector<QVector3D> RugosityAlgorithm::GetRugosityCurvePoints(QVector3D intersect
                 QVector3D v0 = m_inputMesh.m_vertices[triangle.x];
                 QVector3D v1 = m_inputMesh.m_vertices[triangle.y];
                 QVector3D v2 = m_inputMesh.m_vertices[triangle.z];
-                QVector3D out0,out1,out2;
+                QVector3D out0, out1, out2;
+                bool out0ID, out1ID, out2ID;
+                out0ID = out1ID = out2ID = false;
+                LineID lineID0, lineID1, lineID2;
 
                 if(GlobalTools::GetIntersectPoint_segment_to_triangle(normal,p, v0, v1,out0))
+                {
                     res.append(out0);
 
+                    lineID0 = LineID(triangle.x, triangle.y);
+                    dict_points[lineID0] = out0;
+
+                    if(dict_edges.contains(lineID0) == false)
+                        dict_edges[lineID0] = QVector<LineID>();
+
+
+                    out0ID = true;
+                }
+
                 if(GlobalTools::GetIntersectPoint_segment_to_triangle(normal,p, v0, v2,out1))
-                    res.append(out1);
+                {
+                    if(out0ID && out1.distanceToPoint(out0)<1e-9) // 如果第一个有交点out0id，并且0和1的距离比较远
+                    ;
+                    else
+                    {
+                        res.append(out1);
+
+                        lineID1 = LineID(triangle.x, triangle.z);
+                        dict_points[lineID1] = out1;
+
+
+                        if(dict_edges.contains(lineID1) == false)
+                            dict_edges[lineID1] = QVector<LineID>();
+
+                        out1ID = true;
+                    }
+                }
 
                 if(GlobalTools::GetIntersectPoint_segment_to_triangle(normal,p, v1, v2,out2))
-                    res.append(out2);
+                {
+                    if(out0ID && out1ID)
+                        ;
+                    else
+                    {
+                        res.append(out2);
+
+                        lineID2 = LineID(triangle.y, triangle.z);
+                        dict_points[lineID2] = out2;
+
+                        if(dict_edges.contains(lineID2) == false)
+                            dict_edges[lineID2] = QVector<LineID>();
+
+                        out2ID = true;
+                    }
+
+
+                }
+
+                if(out0ID && out1ID)
+                {
+                    if (dict_edges[lineID0].contains(lineID1) == false) dict_edges[lineID0].append(lineID1);
+                    if (dict_edges[lineID1].contains(lineID0) == false) dict_edges[lineID1].append(lineID0);
+                }
+
+                if(out0ID && out2ID)
+                {
+                    if (dict_edges[lineID0].contains(lineID2) == false) dict_edges[lineID0].append(lineID2);
+                    if (dict_edges[lineID2].contains(lineID0) == false) dict_edges[lineID2].append(lineID0);
+                }
+
+                if(out1ID && out2ID)
+                {
+                    if (dict_edges[lineID1].contains(lineID2) == false) dict_edges[lineID1].append(lineID2);
+                    if (dict_edges[lineID2].contains(lineID1) == false) dict_edges[lineID2].append(lineID1);
+                }
             }
 
         }
     }
 
+
+    this->m_curves = GetRugosityCurves(dict_points, dict_edges);
+    qDebug()<<"找到Curve数目: "<< m_curves.count();
+
     return res;
+}
+
+
+QVector<Curve> RugosityAlgorithm::GetRugosityCurves(QMap<LineID, QVector3D>& dict_points, QMap<LineID, QVector<LineID>>& dict_edges)
+{
+    // 初始化访问数组
+    QMap<LineID, bool> isVisited;
+    for(int i = 0; i < dict_points.keys().size(); ++i)
+    {
+        isVisited[dict_points.keys()[i]] = false;
+    }
+
+    // Construct the curves sequentially
+    QVector<Curve> curves;
+
+    while(true)
+    {
+        // Find a unvisited starting point
+        int startPtID = -1;
+        LineID startKey;
+        for(int i=0; i<isVisited.keys().size(); ++i)
+        {
+            LineID key = isVisited.keys()[i];
+
+            //qDebug()<<"边的数目"<< dict_edges[key].count();
+
+            if(isVisited[key] == false && dict_edges[key].count() == 1) // 必须是没有访问过的，同时，只有一个孩子结点
+            {
+                startPtID = i;
+                startKey = key;
+                break;
+            }
+        }
+
+        // Once all points are visited, then end.
+        if(startPtID == -1)
+            break;
+
+        qDebug()<<"孩子<<"<<startPtID<<curves.size();
+
+        TraverseCurve(startKey, 0, curves,dict_points, dict_edges, isVisited);
+
+    }
+
+
+    return curves;
+}
+
+void RugosityAlgorithm::TraverseCurve(LineID startID, int firstChildID,
+                                      QVector<Curve> &curves,
+                                      QMap<LineID, QVector3D> &dict_points, QMap<LineID, QVector<LineID> > &dict_edges,
+                                      QMap<LineID, bool>& isVisited)
+{
+    Curve curCurve;
+
+    isVisited[startID] = true; // 首個節點已經訪問
+    curCurve.pts.append(dict_points[startID]); // 先把第一個點放進來
+
+    LineID parentKey = startID;
+    int nextChildID = firstChildID;
+    while(true)
+    {
+        LineID curKey = dict_edges[parentKey][nextChildID];  // 當前的節點
+
+        // 把当前结点放进来
+        curCurve.pts.append(dict_points[curKey]);
+        isVisited[curKey] = true; // 设置当前已经访问
+
+        bool hasfindChild = false;
+        for(int i=0; i<dict_edges[curKey].size(); ++i)
+        {
+            LineID nextKey = dict_edges[curKey][i];
+
+            if(isVisited[nextKey] == true) // 如果下一个已经被访问过了，不理会
+                continue;
+
+            if(hasfindChild == false)
+            {
+                parentKey = curKey;
+                nextChildID = i;
+                hasfindChild = true;
+                continue;
+            }
+            if(hasfindChild == true)
+            {
+                // 创建一个新的curve
+            }
+        }
+
+        if(hasfindChild == false)  // 如果一个也没有找到
+            break;
+
+
+        parentKey = curKey;
+    }
+    qDebug()<<" -- 当前curve顶点数目:" << curCurve.pts.size();
+    curves.append(curCurve);
 }
 
 void RugosityAlgorithm::FindVerticalPlane(QVector2D startPt2D, QVector2D endPt2D)
@@ -263,7 +437,7 @@ void RugosityAlgorithm::FindVerticalPlane(QVector2D startPt2D, QVector2D endPt2D
 
 }
 
-void RugosityAlgorithm::UpdateCurrentMesh()
+void RugosityAlgorithm::UpdateCurrentCurveMesh()
 {
     for(int i=0; i<m_curveObjects.size(); ++i)
         m_curveObjects[i].ResetAll();
@@ -280,7 +454,7 @@ void RugosityAlgorithm::UpdateCurrentMesh()
     }
 }
 
-void RugosityAlgorithm::RenderCurrentMesh(QOpenGLShaderProgram *&program, const QMatrix4x4 &modelMat)
+void RugosityAlgorithm::RenderCurrentCurveMesh(QOpenGLShaderProgram *&program, const QMatrix4x4 &modelMat)
 {
     for(int i=0; i<m_curves.size(); ++i)
     {

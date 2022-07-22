@@ -18,9 +18,9 @@
 #include <QOpenGLBuffer>
 #include <QOpenGLTexture>
 #include <QOpenGLShaderProgram>
-#include "3rdparty/happly.h"
-#include "3rdparty/tinyply.h"
-#include "3rdparty/utils.h"
+#include "utility/happly.h"
+#include "utility/tinyply.h"
+#include "utility/utils.h"
 
 struct GLBuffer
 {

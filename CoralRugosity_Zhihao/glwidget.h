@@ -14,7 +14,8 @@ public:
     ~GLWidget();
 
     RugosityAlgorithm* m_rugosity;
-
+    QVector<QVector<QVector2D>> m_2D_curves;
+    QVector<QVector2D> m_2D_heights;
 
     enum DISPLAY_MODE
     {
@@ -28,10 +29,15 @@ public:
 
     void SetEyeDist(const QVector3D& c) { this->m_eyeDist = c;}
 
-    bool m_isShowLeaves;
-    bool m_polygonMode;
+    bool m_isWireFrame = true;
+    bool m_isShowBVH = true;
     bool m_isBarkTextured;
     bool m_isShowSeg;
+
+
+    // 参数maxY和minY是纵坐标轴的范围
+    QVector<QVector<QVector2D>> Get2DVersionCurves(float &minY, float &maxY);  // Get Rugosity (cross-section, multi-curves)
+    QVector<QVector2D> Get2DHeightMap(const QVector<QVector<QVector2D>>& curves);  // Get Rugosity (Heights)
 
 protected:
     void initializeGL();
@@ -60,7 +66,7 @@ protected:
     QPoint m_clickpos;
     bool isPressLeftButton = false;
 
-    bool isPressRightButton = true;
+    bool isPressRightButton = false;
     QVector2D m_startPt, m_endPt;
 
     double m_horAngle,m_verAngle;
@@ -78,6 +84,9 @@ protected:
 private:
 
     Ray GetRayFromScreenPos(QVector2D screenPoint);
+
+signals:
+    void sig_updateChart(float minY, float maxY);
 
 private slots:
     void OnViewingTimer();

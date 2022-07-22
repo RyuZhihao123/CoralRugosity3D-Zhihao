@@ -381,7 +381,6 @@ void Object::CreateLineVBO(const Curve &curve)
 
 void Object::DrawLineVBO(QOpenGLShaderProgram *&program, const QMatrix4x4 &modelMat)
 {
-
     if(this->m_meshVBO.count <=0 ||!this->m_meshVBO.vbo.isCreated())
         return;
 

@@ -5,6 +5,7 @@
 #include <QDebug>
 
 
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -18,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->ckbWireFrame,SIGNAL(clicked(bool)), this, SLOT(slot_updateStatus()));
     connect(ui->ckbBVHS,SIGNAL(clicked(bool)), this, SLOT(slot_updateStatus()));
+    connect(ui->spinScale,SIGNAL(valueChanged(double)), this, SLOT(slot_updateStatus()));
     connect(ui->btnSaveRugosity,SIGNAL(clicked(bool)),this,SLOT(slot_saveRugosity()));
 
     // Initialize Chart
@@ -27,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QLineSeries* series = new QLineSeries();
     series->append(0,0);
     series->append(10,0);
-    m_chart_crosssection->setTitle("Rugosity - CrossSection");
+    m_chart_crosssection->setTitle("Rugosity - CrossSection (m)");
 
     m_chart_crosssection->setTheme(QChart::ChartThemeBlueCerulean);
     m_chart_crosssection->setFont(QFont(QString("微软雅黑"),15,2));
@@ -44,7 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QLineSeries* series_2 = new QLineSeries();
     series_2->append(0,0);
     series_2->append(10,0);
-    m_chart_height->setTitle("Rugosity - Height");
+    m_chart_height->setTitle("Rugosity - Height (m)");
 
     m_chart_height->setTheme(QChart::ChartThemeBlueCerulean);
     m_chart_height->setFont(QFont(QString("微软雅黑"),15,2));
@@ -61,7 +63,7 @@ void MainWindow::slot_updateChart(float minY, float maxY)
 {
     // Update Cross-section Chart
     m_chart_crosssection->removeAllSeries();
-    QVector<QVector<QVector2D>> curves = m_glwidget->m_2D_curves;
+    QVector<QVector<QVector2D>>& curves = m_glwidget->m_2D_curves_scaled;
 
     QVector<QLineSeries*> series;
     series.resize(curves.size());
@@ -85,7 +87,7 @@ void MainWindow::slot_updateChart(float minY, float maxY)
 
     // Update Height Chart
     m_chart_height->removeAllSeries();
-    QVector<QVector2D> heights = m_glwidget->m_2D_heights;
+    QVector<QVector2D> heights = m_glwidget->m_2D_heights_scaled;
 
     QLineSeries* series_height = new QLineSeries();
     for(int p=0; p<heights.size(); ++p)
@@ -105,15 +107,17 @@ void MainWindow::slot_updateChart(float minY, float maxY)
 
 
     m_chart_height->createDefaultAxes();
-    m_chart_height->axisY()->setRange(minY, maxY);
-    m_chart_crosssection->axisY()->setRange(minY, maxY);
+    m_chart_height->axisX()->setRange(0, this->m_glwidget->scaled_x_max*1.02);
+    m_chart_height->axisY()->setRange(0, this->m_glwidget->scaled_y_max*1.02);
+    m_chart_crosssection->axisX()->setRange(0, this->m_glwidget->scaled_x_max*1.02);
+    m_chart_crosssection->axisY()->setRange(0, this->m_glwidget->scaled_y_max*1.02);
     //    qDebug()<<(m_chart_crosssection->axes().size());
 
 }
 
 void MainWindow::resizeEvent(QResizeEvent *e)
 {
-    qDebug()<<"resize()";
+    //qDebug()<<"resize()";
     ui->groupBox->move(ui->centralWidget->width()-ui->groupBox->width(),0);
 
     m_glwidget->move(0,0);
@@ -133,6 +137,13 @@ void MainWindow::slot_updateStatus()
 {
     m_glwidget->m_isWireFrame = ui->ckbWireFrame->isChecked();
     m_glwidget->m_isShowBVH = ui->ckbBVHS->isChecked();
+
+    if((QDoubleSpinBox*)sender() == ui->spinScale)
+    {
+        this->m_glwidget->ui_scale_value = ui->spinScale->value();
+        this->m_glwidget->Scale_2D_Rugosity(this->m_glwidget->ui_scale_value);
+        this->slot_updateChart(0,0);
+    }
     m_glwidget->update();
 }
 

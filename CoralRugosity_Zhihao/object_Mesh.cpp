@@ -374,7 +374,7 @@ void Object::CreateLineVBO(const Curve &curve)
 
     m_meshVBO.count = data.size()/3;
 
-    qDebug()<<"创建LineVBO"<<m_meshVBO.vbo.create() << m_meshVBO.count;
+    qDebug()<<"create LineVBO"<<m_meshVBO.vbo.create() << m_meshVBO.count;
     m_meshVBO.vbo.bind();
     m_meshVBO.vbo.allocate(data.constData(),data.count()*sizeof(GLfloat));
 }

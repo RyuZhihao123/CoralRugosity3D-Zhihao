@@ -302,7 +302,7 @@ QVector<QVector<QVector2D>> GLWidget::Get2DVersionCurves(float& minY, float& max
     QVector3D dir = (intersectPointB - intersectPointA).normalized();
     dir.setY(0.0);
 
-    if(dir.z()>0)
+    if(dir.z()<0)
         dir = - dir;
 
 
@@ -420,6 +420,86 @@ QVector<QVector2D> GLWidget::Get2DHeightMap(const QVector<QVector<QVector2D>>& c
     return res;
 }
 
+void GLWidget::Compute_XY_Range(QVector<QVector<QVector2D> > &curves, QVector<QVector2D> &heights)
+{
+    float minX, minY, maxX, maxY;
+    minX = minY = +10e10f;
+    maxX = maxY = -10e10f;
+
+    for(unsigned int i=0; i<curves.size(); ++i)
+    {
+        QVector<QVector2D>& curCurve = curves[i];
+        for(unsigned int k=0; k<curCurve.size(); ++k)
+        {
+            QVector2D pt = curCurve[k];
+            float x = pt.x();
+            float y = pt.y();
+
+            minX = (minX>x)?x:minX;
+            minY = (minY>y)?y:minY;
+            maxX = (maxX<x)?x:maxX;
+            maxY = (maxY<y)?y:maxY;
+        }
+    }
+
+    for(unsigned int k=0; k<heights.size(); ++k)
+    {
+        QVector2D pt = heights[k];
+        float x = pt.x();
+        float y = pt.y();
+
+        minX = (minX>x)?x:minX;
+        minY = (minY>y)?y:minY;
+        maxX = (maxX<x)?x:maxX;
+        maxY = (maxY<y)?y:maxY;
+    }
+
+    this->original_x_range = (maxX-minX);
+    this->original_y_range = (maxY-minY);
+    this->original_x_min = minX;
+    this->original_y_min = minY;
+}
+
+void GLWidget::Scale_2D_Rugosity(float scale)
+{
+    this->m_2D_curves_scaled.clear();
+    this->m_2D_heights_scaled.clear();
+
+    this->scaled_x_max = -10e10f;
+    this->scaled_y_max = -10e10f;
+
+    for(unsigned int i=0; i<this->m_2D_curves.size(); ++i)
+    {
+        this->m_2D_curves_scaled.push_back(QVector<QVector2D>());
+
+        QVector<QVector2D>& curCurve = this->m_2D_curves[i];  // scale前
+        QVector<QVector2D>& curCurve_scaled = this->m_2D_curves_scaled[i];  // scale后
+
+        for(unsigned int k=0; k<curCurve.size(); ++k)
+        {
+            QVector2D pt = curCurve[k];
+            float x = scale * (pt.x()-this->original_x_min);
+            float y = scale * (pt.y()-this->original_y_min);
+            curCurve_scaled.push_back(QVector2D(x,y));
+
+            scaled_x_max = (scaled_x_max<x)?x:scaled_x_max;
+            scaled_y_max = (scaled_y_max<y)?y:scaled_y_max;
+
+        }
+    }
+
+    for(unsigned int k=0; k<this->m_2D_heights.size(); ++k)
+    {
+        QVector2D pt = this->m_2D_heights[k];
+        float x = scale * (pt.x()-this->original_x_min);
+        float y = scale * (pt.y()-this->original_y_min);
+        m_2D_heights_scaled.push_back(QVector2D(x,y));
+
+        scaled_x_max = (scaled_x_max<x)?x:scaled_x_max;
+        scaled_y_max = (scaled_y_max<y)?y:scaled_y_max;
+    }
+}
+
 
 void GLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
@@ -456,6 +536,8 @@ void GLWidget::mouseReleaseEvent(QMouseEvent *event)
             this->m_2D_curves = Get2DVersionCurves(minY, maxY);
             this->m_2D_heights = Get2DHeightMap(this->m_2D_curves);
 
+            this->Compute_XY_Range(this->m_2D_curves, this->m_2D_heights);
+            this->Scale_2D_Rugosity(this->ui_scale_value);
             qDebug()<<m_2D_heights.size();
 
             emit sig_updateChart(minY, maxY);

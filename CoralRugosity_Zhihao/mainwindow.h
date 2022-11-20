@@ -30,7 +30,6 @@ protected:
 protected slots:
     void slot_updateChart(float minY, float maxY);
     void slot_updateStatus();
-
     void slot_saveRugosity();
 
 private:

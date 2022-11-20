@@ -14,9 +14,18 @@ public:
     ~GLWidget();
 
     RugosityAlgorithm* m_rugosity;
+
+    // original 2D rugosity (before scaling)
     QVector<QVector<QVector2D>> m_2D_curves;
     QVector<QVector2D> m_2D_heights;
 
+    float original_y_range, original_x_range, original_x_min, original_y_min;  // 用于scale的一些数值
+    float scaled_x_max, scaled_y_max;  // scale后的数值
+    float ui_scale_value = 1.0f;
+
+    // visulized 2D rugosity (after scaling)
+    QVector<QVector<QVector2D>> m_2D_curves_scaled;
+    QVector<QVector2D> m_2D_heights_scaled;
     enum DISPLAY_MODE
     {
         _Normal,
@@ -38,6 +47,9 @@ public:
     // 参数maxY和minY是纵坐标轴的范围
     QVector<QVector<QVector2D>> Get2DVersionCurves(float &minY, float &maxY);  // Get Rugosity (cross-section, multi-curves)
     QVector<QVector2D> Get2DHeightMap(const QVector<QVector<QVector2D>>& curves);  // Get Rugosity (Heights)
+
+    void Compute_XY_Range(QVector<QVector<QVector2D>>& curves, QVector<QVector2D>& heights);
+    void Scale_2D_Rugosity(float scale=1.0f);
 
 protected:
     void initializeGL();

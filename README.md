@@ -4,7 +4,7 @@ This is a software designed for coral rugosity computation (``HKUST VGD Group``)
 
 - **Usage**: users can interact with 3D coral mesh models and freely specify the region of interest. Then, the system will automatically compute and showcase the corresponding rugosity and other relavent information.
 
-- **Source Codes**: please go to this folder [[link]](https://github.com/RyuZhihao123/CoralRugosity/tree/main/CoralRugosity_Zhihao).
+- **Source Codes**: please go to this folder [[Source codes]](https://github.com/RyuZhihao123/CoralRugosity/tree/main/CoralRugosity_Zhihao).
 
 - **Requirement**: This project is developed with ``C++ 11`` and ``OpenGL 4.0+`` (you can use ``Visual Studio 2019+`` or ``Qt5.8+`` to easily compile this project).
 

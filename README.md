@@ -2,7 +2,7 @@
 This is a software designed for coral rugosity computation (``HKUST VGD Group``), which is useful for the fundamental reseach on Marine Biology field or the like.
 
 
-- **Usage**: users can interact with 3D coral mesh models and freely specify the region of interest. Then, the system will automatically compute and showcase the corresponding rugosity and relavent information.
+- **Usage**: users can interact with 3D coral mesh models and freely specify the region of interest. Then, the system will automatically compute and showcase the corresponding rugosity and other relavent information.
 
 - **Source Codes**: please go to this folder [[link]](https://github.com/RyuZhihao123/CoralRugosity/tree/main/CoralRugosity_Zhihao).
 

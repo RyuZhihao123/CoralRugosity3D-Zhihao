@@ -5,7 +5,7 @@ This is a software designed for coral rugosity computation (``HKUST VGD Group``)
 
 - This project is developed with ``C++ 11`` and ``OpenGL 4.0+`` (you can use ``Visual Studio 2019+`` or ``Qt5.8+`` to easily compile this project).
 
-**Usage and introduction**, please check these two videos for its usage: [Full Introducion Video (6min)](https://hkustconnect-my.sharepoint.com/:v:/g/personal/zliuem_connect_ust_hk/ESVDay4p9GFIv-bjDyzJM0gBut2MnGZS8UJJ52aH9RRxuw?e=Goegkb) and [Short Demo Video (10sec)](https://hkustconnect-my.sharepoint.com/:v:/g/personal/zliuem_connect_ust_hk/EUOFKCo9tTZFty2rVJMw4iABEGVwWlSnkLCYim2jHT29Ig?e=NGomST)
+- **Video Demos**: [Full Introducion Video (6min)](https://hkustconnect-my.sharepoint.com/:v:/g/personal/zliuem_connect_ust_hk/ESVDay4p9GFIv-bjDyzJM0gBut2MnGZS8UJJ52aH9RRxuw?e=Goegkb) and [Short Demo Video (10sec)](https://hkustconnect-my.sharepoint.com/:v:/g/personal/zliuem_connect_ust_hk/EUOFKCo9tTZFty2rVJMw4iABEGVwWlSnkLCYim2jHT29Ig?e=NGomST)
 
 ## Update History:
 

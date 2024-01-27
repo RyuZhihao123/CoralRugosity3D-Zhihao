@@ -1,9 +1,9 @@
 # CoralRugosity-LIU Zhihao
 This is a software designed for coral rugosity computation (``HKUST VGD Group``), which is useful for the reseach on Marine Biology or the like.
 
-- Usage: users can interact with a 3D coral model and freely specify the region of interest. Then, the system will automatically showcase the corresponding rugosity and relavent information.
+- **Usage**: users can interact with a 3D coral model and freely specify the region of interest. Then, the system will automatically showcase the corresponding rugosity and relavent information.
 
-- This project is developed with ``C++ 11`` and ``OpenGL 4.0+`` (you can use ``Visual Studio 2019+`` or ``Qt5.8+`` to easily compile this project).
+- **Requirement**: This project is developed with ``C++ 11`` and ``OpenGL 4.0+`` (you can use ``Visual Studio 2019+`` or ``Qt5.8+`` to easily compile this project).
 
 - **Video Demos**: [Full Introducion Video (6min)](https://hkustconnect-my.sharepoint.com/:v:/g/personal/zliuem_connect_ust_hk/ESVDay4p9GFIv-bjDyzJM0gBut2MnGZS8UJJ52aH9RRxuw?e=Goegkb) and [Short Demo Video (10sec)](https://hkustconnect-my.sharepoint.com/:v:/g/personal/zliuem_connect_ust_hk/EUOFKCo9tTZFty2rVJMw4iABEGVwWlSnkLCYim2jHT29Ig?e=NGomST)
 

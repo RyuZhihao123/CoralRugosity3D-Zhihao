@@ -1,4 +1,4 @@
-# CoralRugosity-LIU Zhihao
+# CoralRugosity
 This is a software designed for coral rugosity computation (``HKUST VGD Group``), which is useful for the fundamental reseach on Marine Biology field or the like.
 
 

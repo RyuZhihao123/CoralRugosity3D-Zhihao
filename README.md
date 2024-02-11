@@ -10,7 +10,7 @@ This is a software designed for coral rugosity computation (``HKUST VGD Group``)
 
 - **Video Demos**: [Full Introducion Video (6min)](https://drive.google.com/file/d/1VCVGPRM6rvlVhphPzhBRmh937NgIrrGS/view?usp=sharing) and [Short Demo Video (10sec)](https://drive.google.com/file/d/1rLDS7xQg8qLJw_aDXdZU3kCRQt-JaWJl/view?usp=sharing)
 
-  <div align=center><img height="300" src="https://github.com/RyuZhihao123/CoralRugosity/blob/main/figures/7_20_0.png"/></div>
+  <div align=center><img width="600" src="https://github.com/RyuZhihao123/CoralRugosity/blob/main/project-coral.png"/></div>
 
 ## Update History:
 

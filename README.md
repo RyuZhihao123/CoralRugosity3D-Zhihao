@@ -4,13 +4,13 @@ This is a software designed for coral rugosity computation (``HKUST VGD Group``)
 
 I developed this program when I studied in HKUST (2022).
 
-- **Usage**: users can interact with 3D coral mesh models and freely specify the region of interest. Then, the system will automatically compute and showcase the corresponding rugosity and other relavent information.
+- 📐 **Usage**: users can interact with 3D coral mesh models and freely specify the region of interest. Then, the system will automatically compute and showcase the corresponding rugosity and other relavent information.
 
-- **Source Codes**: please go to this folder [[Source codes]](https://github.com/RyuZhihao123/CoralRugosity/tree/main/CoralRugosity_Zhihao).
+- 📁 **Source Codes**: please go to this folder [[Source codes]](https://github.com/RyuZhihao123/CoralRugosity/tree/main/CoralRugosity_Zhihao).
 
-- **Requirement**: This project is developed with ``C++ 11`` and ``OpenGL 4.0+`` (you can use ``Visual Studio 2019+`` or ``Qt5.8+`` to easily compile this project).
+- 📌 **Requirement**: This project is developed with ``C++ 11`` and ``OpenGL 4.0+`` (you can use ``Visual Studio 2019+`` or ``Qt5.8+`` to easily compile this project).
 
-- **Video Demos**: [Full Introducion Video (6min)](https://drive.google.com/file/d/1VCVGPRM6rvlVhphPzhBRmh937NgIrrGS/view?usp=sharing) and [Short Demo Video (10sec)](https://drive.google.com/file/d/1rLDS7xQg8qLJw_aDXdZU3kCRQt-JaWJl/view?usp=sharing)
+- 🎞️ **Video Demos**: [Full Introducion Video (6min)](https://drive.google.com/file/d/1VCVGPRM6rvlVhphPzhBRmh937NgIrrGS/view?usp=sharing) and [Short Demo Video (10sec)](https://drive.google.com/file/d/1rLDS7xQg8qLJw_aDXdZU3kCRQt-JaWJl/view?usp=sharing)
 
   <div align=center><img width="600" src="https://github.com/RyuZhihao123/CoralRugosity/blob/main/project-coral.png"/></div>
 
